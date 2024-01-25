@@ -4,7 +4,7 @@
 #                                   #
 ##%###############################%##
 
-import::from("dplyr", '%>%')
+'%>%' <- dplyr::'%>%'
 
 source("_config.R")
 
@@ -134,12 +134,37 @@ if (to_update) {
       graph1
     }
   
-  list.files("www/png", recursive = TRUE, full.names = TRUE) %>% 
-    purrr::walk(file.remove)
+  if (dir.exists("www/png"))
+    unlink("www/png", recursive = TRUE)
+  if (dir.exists("www/popups"))
+    unlink("www/popups", recursive = TRUE)
+  
+  dir.create("www/popups/3mod", recursive = TRUE)
+  dir.create("www/popups/4mod", recursive = TRUE)
+  
+  save_popups <- function(graphs, dir) {
+    purrr::walk(
+      names(graphs),
+      function(station) {
+        tmp <- tempfile(pattern = "popup", fileext = ".png")
+        
+        ggplot2::ggsave(
+          plot = graphs[[station]],
+          filename = tmp,
+          width = 14,
+          height = 10,
+          units = "cm",
+          dpi = 150
+        )
+        
+        png::readPNG(tmp) %>% 
+          webp::write_webp(target = paste0(dir, station, ".webp"))
+      }
+    )
+  }
   
   ### -> graphiques 3modalités
-  graphiques_int_3mod <- 
-    purrr::map(
+  purrr::map(
       .x = stations_onde_geo_usuelles$code_station, 
       .f = produire_graph_pour_une_station, 
       type_mod = lib_ecoul3mod,
@@ -147,25 +172,11 @@ if (to_update) {
       mod_levels = c("Assec", "Ecoulement\nnon visible", "Ecoulement\nvisible", "Observation\nimpossible", "Donnée\nmanquante"),
       mod_colors = mes_couleurs_3mod
       ) %>% 
-    purrr::set_names(stations_onde_geo_usuelles$code_station)
-  
-  purrr::walk(
-    names(graphiques_int_3mod),
-    function(station) {
-      ggplot2::ggsave(
-        plot = graphiques_int_3mod[[station]],
-        filename = paste0("www/png/3mod/", station, ".png"),
-        width = 14,
-        height = 10,
-        units = "cm",
-        dpi = 150
-      )
-    }
-  )
+    purrr::set_names(stations_onde_geo_usuelles$code_station) %>% 
+    save_popups(dir = "www/popups/3mod/")
   
   ### -> graphiques 4modalités
-  graphiques_int_4mod <- 
-    purrr::map(
+  purrr::map(
       .x = stations_onde_geo_usuelles$code_station, 
       .f = produire_graph_pour_une_station, 
       type_mod = lib_ecoul4mod,
@@ -173,25 +184,11 @@ if (to_update) {
       mod_levels = c("Assec", "Ecoulement\nnon visible", "Ecoulement\nvisible\nfaible", "Ecoulement\nvisible\nacceptable", "Observation\nimpossible", "Donnée\nmanquante"),
       mod_colors = mes_couleurs_4mod
       ) %>% 
-    purrr::set_names(stations_onde_geo_usuelles$code_station)
-  
-  purrr::walk(
-    names(graphiques_int_4mod),
-    function(station) {
-      ggplot2::ggsave(
-        plot = graphiques_int_4mod[[station]],
-        filename = paste0("www/png/4mod/", station, ".png"),
-        width = 14,
-        height = 10,
-        units = "cm",
-        dpi = 150
-      )
-    }
-  )
+    purrr::set_names(stations_onde_geo_usuelles$code_station) %>% 
+    save_popups(dir = "www/popups/4mod/")
   
   ### -> graphiques 3modalités anciennes stations
-  graphiques_int_3mod_old <- 
-    purrr::map(
+  purrr::map(
       .x = stations_inactives_onde_geo$code_station, 
       .f = produire_graph_pour_une_station, 
       type_mod = lib_ecoul3mod,
@@ -199,25 +196,11 @@ if (to_update) {
       mod_levels = c("Assec", "Ecoulement\nnon visible", "Ecoulement\nvisible", "Observation\nimpossible", "Donnée\nmanquante"),
       mod_colors = mes_couleurs_3mod
     ) %>% 
-    purrr::set_names(stations_inactives_onde_geo$code_station)
-  
-  purrr::walk(
-    names(graphiques_int_3mod_old),
-    function(station) {
-      ggplot2::ggsave(
-        plot = graphiques_int_3mod_old[[station]],
-        filename = paste0("www/png/3mod/", station, ".png"),
-        width = 14,
-        height = 10,
-        units = "cm",
-        dpi = 150
-      )
-    }
-  )
-  
+    purrr::set_names(stations_inactives_onde_geo$code_station) %>% 
+    save_popups(dir = "www/popups/3mod/")
+
   ### -> graphiques 4modalités anciennes stations
-  graphiques_int_4mod_old <- 
-    purrr::map(
+  purrr::map(
       .x = stations_inactives_onde_geo$code_station, 
       .f = produire_graph_pour_une_station, 
       type_mod = lib_ecoul4mod,
@@ -225,26 +208,13 @@ if (to_update) {
       mod_levels = c("Assec", "Ecoulement\nnon visible", "Ecoulement\nvisible\nfaible", "Ecoulement\nvisible\nacceptable", "Observation\nimpossible", "Donnée\nmanquante"),
       mod_colors = mes_couleurs_4mod
     ) %>% 
-    purrr::set_names(stations_inactives_onde_geo$code_station)
-  
-  purrr::walk(
-    names(graphiques_int_4mod_old),
-    function(station) {
-      ggplot2::ggsave(
-        plot = graphiques_int_4mod_old[[station]],
-        filename = paste0("www/png/4mod/", station, ".png"),
-        width = 14,
-        height = 10,
-        units = "cm",
-        dpi = 150
-      )
-    }
-  )
-  
+    purrr::set_names(stations_inactives_onde_geo$code_station) %>% 
+    save_popups(dir = "www/popups/4mod/")
 
   ## Conditions d'écoulement lors des campagnes usuelles de l'année en cours
-plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE) {
+plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modalites = ggplot2::waiver()) {
   data_bilan %>% 
+    
     ggplot2::ggplot(
       mapping = ggplot2::aes(
         y = frq, 
@@ -276,12 +246,16 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE) {
     ggplot2::xlab("Mois") +
     ggplot2::scale_fill_manual(
       name = "Situation stations",
-      values = c("Ecoulement visible" = "#4575b4",
-                 "Ecoulement visible acceptable" = "#4575b4",
-                 "Ecoulement visible faible" = "#bdd7e7",
+      values = c("Donnée manquante" = "grey90",
+                 "Observation impossible" = "grey50",
                  "Assec" = "#d73027",
                  "Ecoulement non visible" = "#fe9929",
-                 "Observation impossible" = "grey50")
+                 "Ecoulement visible faible" = "#bdd7e7",
+                 "Ecoulement visible acceptable" = "#4575b4",
+                 "Ecoulement visible" = "#4575b4"
+                 ),
+      breaks = modalites,
+      drop = FALSE
     ) +
     ggplot2::theme_bw() +
     ggplot2::theme(
@@ -300,20 +274,24 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE) {
       plot.background = ggplot2::element_blank(),
     ) +
     ggplot2::guides(
-      fill = ggplot2::guide_legend(nrow = 2, byrow = TRUE)
+      fill = ggplot2::guide_legend(nrow = 2, byrow = FALSE)
       )
 }
 
   bilan_cond_reg_typo_nat <- plot_bilan_prop(
-    df_categ_obs_3mod_reg,
+    df_categ_obs_3mod_reg %>% 
+      dplyr::mutate(lib_ecoul3mod = forcats::fct_rev(lib_ecoul3mod)),
     lib_ecoulement = lib_ecoul3mod, 
-    regional = TRUE
+    regional = TRUE,
+    modalites = c("Donnée manquante", "Observation impossible", "Assec", "Ecoulement non visible", "Ecoulement visible")
     )
   
   bilan_cond_reg_typo_dep <- plot_bilan_prop(
-    df_categ_obs_4mod_reg, 
+    df_categ_obs_4mod_reg %>% 
+      dplyr::mutate(lib_ecoul4mod = forcats::fct_rev(lib_ecoul4mod)), 
     lib_ecoulement = lib_ecoul4mod, 
-    regional = TRUE
+    regional = TRUE,
+    modalites = c("Donnée manquante", "Observation impossible", "Assec", "Ecoulement non visible", "Ecoulement visible faible", "Ecoulement visible acceptable")
   )
   
   bilan_cond_dep <- conf_dep %>% 
@@ -322,8 +300,10 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE) {
         if (d %in% df_categ_obs_4mod$code_departement) {
           plot_bilan_prop(
             df_categ_obs_4mod %>% 
-              dplyr::filter(code_departement == d), 
-            lib_ecoulement = lib_ecoul4mod
+              dplyr::filter(code_departement == d) %>% 
+              dplyr::mutate(lib_ecoul4mod = forcats::fct_rev(lib_ecoul4mod)), 
+            lib_ecoulement = lib_ecoul4mod,
+            modalites = c("Donnée manquante", "Observation impossible", "Assec", "Ecoulement non visible", "Ecoulement visible faible", "Ecoulement visible acceptable")
           )
         }
       }
