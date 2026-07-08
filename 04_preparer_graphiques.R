@@ -349,7 +349,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
       ggplot2::geom_tile(col = 'white', linewidth = 0.5) +
       ggplot2::scale_fill_gradientn(
         "% d\'assecs",
-        colors = adjustcolor(hcl.colors(10, "OrRd", rev = T),
+        colors = adjustcolor(c("#4575b4", hcl.colors(9, "OrRd", rev = T)),
                              alpha.f = 0.8),
         limits = c(0,100),
         na.value = adjustcolor("grey90", alpha.f = 0.7)
