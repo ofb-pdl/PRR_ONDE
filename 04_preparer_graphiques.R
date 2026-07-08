@@ -351,6 +351,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
         "% d\'assecs",
         colors = adjustcolor(c("#4575b4", hcl.colors(9, "OrRd", rev = T)),
                              alpha.f = 0.8),
+        values = c(0, seq(0.0001, 1, length.out = 9)),
         limits = c(0,100),
         na.value = adjustcolor("grey90", alpha.f = 0.7)
       ) +
