@@ -275,7 +275,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
       values = c("Donnée manquante" = "grey90",
                  "Observation impossible" = "grey50",
                  "Assec" = "#d73027",
-                 "Ecoulement non visible" = "#fe9929",
+                 "Ecoulement non visible" = "#FFFF80",
                  "Ecoulement visible faible" = "#bdd7e7",
                  "Ecoulement visible acceptable" = "#4575b4",
                  "Ecoulement visible" = "#4575b4"
