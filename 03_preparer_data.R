@@ -708,6 +708,7 @@ if (to_update) {
        onde_periode,
        onde_anciennes_stations,
        onde_plus,
+       onde_usuel,
        df_categ_obs_3mod,
        df_categ_obs_3mod_reg,
        mes_couleurs_3mod,
