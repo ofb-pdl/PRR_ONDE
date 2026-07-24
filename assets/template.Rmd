@@ -390,7 +390,7 @@ L'Observatoire national des étiages (ONDE) a pour objectif de contribuer à la 
 
 Les données sont produites par les agents de l'Office français de la biodiversité à partir des observations de terrain réalisées sur les stations du réseau ONDE. Les données sont [mises à disposition](https://onde.eaufrance.fr/content/t%C3%A9l%C3%A9charger-les-donn%C3%A9es-des-campagnes-par-ann%C3%A9e) sous forme de fichiers annuels au format Excel. Le fichier de l'année en cours est mis à jour "au fil de l'eau" ; ou disponible sur la plateforme [Hubeau](https://hubeau.eaufrance.fr/) à partir des APIs disponibles (*API écoulement*).
 
-Seules les observations des stations encore actives ont été prises en compte. En Sarthe, le réseau de stations a été modifié en 2017. 7 stations suivies depuis 2012 sont toujours suivies aujourd'hui. 25 stations ne sont plus suivies et ont remplacées par des nouvelles stations en 2017. Cela explique qu'il y ait des données manquantes pour le département.
+Seules les observations des stations encore actives ont été prises en compte. En Sarthe, le réseau de stations a été modifié en 2017. 7 stations suivies depuis 2012 sont toujours suivies aujourd'hui. 25 stations ne sont plus suivies et ont été remplacées par des nouvelles stations en 2017. Cela explique qu'il y ait des données manquantes pour le département.
 
 **Les campagnes d'observations**
 
