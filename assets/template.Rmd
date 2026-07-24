@@ -314,7 +314,7 @@ bilan_cond_reg_typo_nat
 bilan_cond_reg_typo_dep
 ```
 
-### **Évolution des conditions d'écoulement lors des campagnes usuelles pour le mois en cours (stations encore actives)** {.tabset}
+### **Évolution des conditions d'écoulement lors des campagnes usuelles pour le mois en cours (stations toujours actives)** {.tabset}
 
 <br>
 
@@ -328,7 +328,7 @@ bilan_mois_reg_typo_nat
 bilan_mois_reg_typo_dep
 ```
 
-### **Sévérité des assecs**
+### **Sévérité des assecs (stations toujours actives)**
 
 <br>
 
@@ -357,13 +357,13 @@ for (d in conf_dep) {
     
     cat("\n")
     
-    cat("\n#### **Évolution des conditions d'écoulement lors des campagnes usuelles pour le mois en cours (stations encore actives)**\n")
+    cat("\n#### **Évolution des conditions d'écoulement lors des campagnes usuelles pour le mois en cours (stations toujours actives)**\n")
     
     print(bilan_mois_dep[[d]])
     
     cat("\n")
     
-    cat("\n#### **Sévérité des assecs**\n")
+    cat("\n#### **Sévérité des assecs (stations toujours actives)**\n")
     
     print(severite_assecs_dep[[d]])
     
