@@ -9,7 +9,7 @@
 source("_config.R")
 
 load("data/onde_data/to_update.rda")
-# to_update <- TRUE
+to_update <- TRUE
 load("data/processed_data/donnees_pour_graphiques.rda")
 
 if (to_update) {
@@ -261,11 +261,12 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
       if(regional == FALSE)
       ggplot2::facet_grid(~code_departement)
       } +
-    ggrepel::geom_text_repel(
+    ggplot2::geom_text(
+      mapping = ggplot2::aes(label = Label_p),
+      position = ggplot2::position_stack(vjust = 0.5),
       size = 3,
-      color = "black", 
-      fontface = 'bold.italic',
-      position = ggplot2::position_stack(vjust = 0.5)
+      colour = "black",
+      fontface = "bold.italic"
     ) +
     ggplot2::coord_flip() +
     ggplot2::ylab("Pourcentage (%)") +
@@ -281,7 +282,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
                  "Ecoulement visible" = "#4575b4"
                  ),
       breaks = modalites,
-      drop = FALSE
+      drop = TRUE
     ) +
     ggplot2::theme_bw() +
     ggplot2::theme(
@@ -332,6 +333,283 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
             modalites = c("Donnée manquante", "Observation impossible", "Assec", "Ecoulement non visible", "Ecoulement visible faible", "Ecoulement visible acceptable")
           )
         }
+      }
+    ) %>% 
+    purrr::set_names(conf_dep)
+  
+  ## Relevés pour le mois en cours les années précédentes
+  
+  mois_courant <- format(Sys.Date(), "%m")
+  
+  df_mois_courant <- onde_usuel %>% 
+    dplyr::mutate(
+      mois_num = as.integer(Mois),
+      mois_nom = factor(
+        Mois,
+        levels = c(
+          "01", "02", "03", "04",
+          "05", "06", "07", "08",
+          "09", "10", "11", "12"
+        ),
+        labels = c(
+          "Janvier", "Février", "Mars", "Avril",
+          "Mai", "Juin", "Juillet", "Août",
+          "Septembre", "Octobre", "Novembre", "Décembre"
+        )
+      )
+    ) %>% 
+    dplyr::filter(
+      mois_num == as.integer(mois_courant)
+    )
+  
+  
+  ## Données régionales (3 modalités)
+  ## Données régionales (typologie nationale - 3 modalités)
+  df_bilan_mois_reg_nat <- df_mois_courant %>% 
+    dplyr::group_by(
+      Annee,
+      lib_ecoul3mod
+    ) %>% 
+    dplyr::summarise(
+      nb_station = dplyr::n_distinct(code_station),
+      .groups = "drop"
+    ) %>% 
+    dplyr::group_by(Annee) %>% 
+    dplyr::mutate(
+      pct_station = nb_station / sum(nb_station) * 100
+    ) %>% 
+    dplyr::ungroup()
+  
+  
+  ## Données régionales (typologie départementale - 4 modalités)
+  df_bilan_mois_reg_dep <- df_mois_courant %>% 
+    dplyr::group_by(
+      Annee,
+      lib_ecoul4mod
+    ) %>% 
+    dplyr::summarise(
+      nb_station = dplyr::n_distinct(code_station),
+      .groups = "drop"
+    ) %>% 
+    dplyr::group_by(Annee) %>% 
+    dplyr::mutate(
+      pct_station = nb_station / sum(nb_station) * 100
+    ) %>% 
+    dplyr::ungroup()
+  
+  ## Données départementales (4 modalités)
+  df_bilan_mois_dep <- df_mois_courant %>% 
+    dplyr::group_by(
+      code_departement,
+      Annee,
+      lib_ecoul4mod
+    ) %>% 
+    dplyr::summarise(
+      nb_station = dplyr::n_distinct(code_station),
+      .groups = "drop"
+    ) %>% 
+    dplyr::group_by(
+      code_departement,
+      Annee
+    ) %>% 
+    dplyr::mutate(
+      pct_station = nb_station / sum(nb_station) * 100
+    ) %>% 
+    dplyr::ungroup()
+  
+  
+  mois_affiche <- levels(df_mois_courant$mois_nom)[
+    as.integer(mois_courant)
+  ]
+  
+  
+  ## Fonction graphique
+  plot_bilan_mois <- function(data_bilan, lib_ecoulement, regional = FALSE, modalites = ggplot2::waiver()) {
+    
+    data_bilan %>% 
+      ggplot2::ggplot(
+        ggplot2::aes(
+          x = factor(Annee),
+          y = pct_station,
+          fill = forcats::fct_rev({{lib_ecoulement}})
+        )
+      ) +
+      
+      ggplot2::geom_bar(
+        stat = "identity",
+        position = "stack",
+        alpha = 0.7,
+        width = 0.7
+      ) +
+      
+      {
+        if(regional == FALSE)
+          ggplot2::facet_grid(~code_departement)
+      } +
+      
+      ggplot2::scale_fill_manual(
+        name = "Situation stations",
+        values = c(
+          "Donnée manquante" = "grey90",
+          "Observation impossible" = "grey50",
+          "Assec" = "#d73027",
+          "Ecoulement non visible" = "#fe9929",
+          "Ecoulement visible faible" = "#FFFF80",
+          "Ecoulement visible acceptable" = "#4575b4",
+          "Ecoulement visible" = "#4575b4"
+        ),
+        breaks = modalites,
+        drop = TRUE
+      ) +
+      
+      ggplot2::ggtitle(
+        glue::glue(
+          "Évolution des conditions d'écoulement - {mois_affiche}"
+        )
+      ) +
+      
+      ggplot2::ylab("") +
+      ggplot2::xlab("Année") +
+      
+      ggplot2::scale_y_continuous(
+        labels = scales::label_percent(scale = 1),
+        breaks = seq(0,100,20),
+        expand = c(0,0),
+        sec.axis = ggplot2::sec_axis(
+          ~.,
+          breaks = seq(0,100,20),
+          labels = scales::label_percent(scale = 1)
+        )
+      ) +
+      ggplot2::coord_cartesian(ylim = c(0,100)) +
+      
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        title = ggplot2::element_text(
+          size = 11,
+          face = "bold"
+        ),
+        legend.text = ggplot2::element_text(size = 11),
+        legend.title = ggplot2::element_text(
+          size = 11,
+          face = "bold"
+        ),
+        axis.text.x = ggplot2::element_text(
+          size = 11,
+          angle = 45,
+          hjust = 1
+        ),
+        strip.text.x = ggplot2::element_text(
+          size = 11,
+          face = "bold"
+        ),
+        strip.background = ggplot2::element_rect(
+          color = "black",
+          fill = "grey80"
+        ),
+        legend.position = "bottom"
+      ) +
+      
+      ggplot2::guides(
+        fill = ggplot2::guide_legend(
+          nrow = 2,
+          byrow = FALSE
+        )
+      )
+  }
+  
+  
+  ## Graph régional
+  # Typologie nationale
+  bilan_mois_reg_typo_nat <- plot_bilan_mois(
+    df_bilan_mois_reg_nat %>% 
+      dplyr::mutate(
+        lib_ecoul3mod = factor(
+          lib_ecoul3mod,
+          levels = c(
+            "Donnée manquante",
+            "Observation impossible",
+            "Assec",
+            "Ecoulement non visible",
+            "Ecoulement visible"
+          )
+        ),
+        lib_ecoul3mod = forcats::fct_rev(lib_ecoul3mod)
+      ),
+    lib_ecoulement = lib_ecoul3mod,
+    regional = TRUE,
+    modalites = c(
+      "Donnée manquante",
+      "Observation impossible",
+      "Assec",
+      "Ecoulement non visible",
+      "Ecoulement visible"
+    )
+  )
+  
+  # Typologie départementale
+  bilan_mois_reg_typo_dep <- plot_bilan_mois(
+    df_bilan_mois_reg_dep %>% 
+      dplyr::mutate(
+        lib_ecoul4mod = factor(
+          lib_ecoul4mod,
+          levels = c(
+            "Donnée manquante",
+            "Observation impossible",
+            "Assec",
+            "Ecoulement non visible",
+            "Ecoulement visible faible",
+            "Ecoulement visible acceptable"
+          )
+        ),
+        lib_ecoul4mod = forcats::fct_rev(lib_ecoul4mod)
+      ),
+    lib_ecoulement = lib_ecoul4mod,
+    regional = TRUE,
+    modalites = c(
+      "Donnée manquante",
+      "Observation impossible",
+      "Assec",
+      "Ecoulement non visible",
+      "Ecoulement visible faible",
+      "Ecoulement visible acceptable"
+    )
+  )
+  
+  ## Graphs départementaux
+  bilan_mois_dep <- conf_dep %>% 
+    purrr::map(
+      function(d) {
+        
+        plot_bilan_mois(
+          df_bilan_mois_dep %>% 
+            dplyr::filter(
+              code_departement == d
+            ) %>% 
+            dplyr::mutate(
+              lib_ecoul4mod = factor(
+                lib_ecoul4mod,
+                levels = c(
+                  "Donnée manquante",
+                  "Observation impossible",
+                  "Assec",
+                  "Ecoulement non visible",
+                  "Ecoulement visible faible",
+                  "Ecoulement visible acceptable"
+                )
+              ),
+              lib_ecoul4mod = forcats::fct_rev(lib_ecoul4mod)
+            ),
+          lib_ecoulement = lib_ecoul4mod,
+          modalites = c(
+            "Donnée manquante",
+            "Observation impossible",
+            "Assec",
+            "Ecoulement non visible",
+            "Ecoulement visible faible",
+            "Ecoulement visible acceptable"
+          )
+        )
       }
     ) %>% 
     purrr::set_names(conf_dep)
@@ -454,12 +732,18 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
       }
     ) %>% 
     purrr::set_names(conf_dep)
+  
+  ## Relevés pour le mois en cours les années précédentes
+  
 
   ## Sauvegarde
   save(
     bilan_cond_reg_typo_nat,
     bilan_cond_reg_typo_dep,
     bilan_cond_dep,
+    bilan_mois_reg_typo_nat,
+    bilan_mois_reg_typo_dep,
+    bilan_mois_dep,
     severite_assecs_reg,
     severite_assecs_dep,
     assecs_consecutifs_reg,
