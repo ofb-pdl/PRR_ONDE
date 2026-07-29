@@ -54,8 +54,8 @@ Les cartes se lisent de la manière suivante :
 
 -   La forme des symboles correspond au type de campagne: carré pour les campagnes usuelles, rond pour les campagnes complémentaires ;
 -   La dernière campagne usuelle est représentée et seules les observations complémentaires postérieures à cette campagne sont représentées ;
--   La couleur des symbole correspond à la situation des observations au cours de ces dernières campagnes ;
--   La taille des symbole est proportionnelle à la fréquence des assecs sur les chroniques de données des campagnes usuelles ;
+-   La couleur des symboles correspond à la situation des observations au cours de ces dernières campagnes ;
+-   La taille des symboles est proportionnelle à la fréquence des assecs sur les chroniques de données des campagnes usuelles ;
 -   En cliquant sur une station, un graphique de l'historique des observations et états d'écoulement peut être affiché. Ce graphique reprend la même symbologie que la carte ;
 -   Avec le menu déroulant (en haut à droite), différents éléments cartographiques peuvent être affichés (i.e. fonds de cartes, départements, assecs, zones d'alerte Propluvia).
 
