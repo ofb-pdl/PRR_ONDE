@@ -314,21 +314,28 @@ bilan_cond_reg_typo_nat
 bilan_cond_reg_typo_dep
 ```
 
-### **Évolution des conditions d'écoulement lors des campagnes usuelles pour le mois en cours (stations toujours actives)** {.tabset}
+### **Évolution des conditions d'écoulements lors des campagnes usuelles par mois (stations encore actives)** {.tabset}
 
 <br>
 
-#### Typologie nationale
-```{r bilan mois national, fig.height = 5.5, fig.width = 9, align = "center", warning = FALSE}
-bilan_mois_reg_typo_nat
+```{r, results='asis', fig.height=5.5, fig.width=9, align='center'}
+for (m in names(graphs_mois)) {
+
+  cat(paste0("\n#### ", m, " {.tabset}\n"))
+
+  cat("\n##### Typologie nationale\n")
+  print(graphs_mois[[m]]$reg_nat)
+
+  cat("\n")
+
+  cat("\n##### Typologie départementale\n")
+  print(graphs_mois[[m]]$reg_dep)
+
+  cat("\n")
+}
 ```
 
-#### Typologie départementale
-```{r bilan mois departemental, fig.height = 5.5, fig.width = 9, align = "center", warning = FALSE}
-bilan_mois_reg_typo_dep
-```
-
-### **Sévérité des assecs (stations toujours actives)**
+### **Sévérité des assecs**
 
 <br>
 
@@ -357,13 +364,18 @@ for (d in conf_dep) {
     
     cat("\n")
     
-    cat("\n#### **Évolution des conditions d'écoulement lors des campagnes usuelles pour le mois en cours (stations toujours actives)**\n")
+   cat("\n#### **Évolution des conditions d'écoulement (stations encore actives)** {.tabset}\n")
+
+for (m in names(graphs_mois)) {
+
+  cat(paste0("\n##### ", m, "\n"))
+
+  print(graphs_mois[[m]]$dep[[d]])
+
+  cat("\n")
+}
     
-    print(bilan_mois_dep[[d]])
-    
-    cat("\n")
-    
-    cat("\n#### **Sévérité des assecs (stations toujours actives)**\n")
+    cat("\n#### **Sévérité des assecs**\n")
     
     print(severite_assecs_dep[[d]])
     
