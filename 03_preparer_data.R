@@ -38,7 +38,7 @@ if (to_update) {
   mes_couleurs_4mod <- c(
     #"Ecoulement\nvisible" = "#0570b0",
     "Ecoulement\nvisible\nacceptable" = "#4575b4",
-    "Ecoulement\nvisible\nfaible" = "#FFFF80",
+    "Ecoulement\nvisible\nfaible" = "#bdd7e7",
     "Ecoulement\nnon visible" = "#fe9929",
     "Assec" = "#d73027",
     "Observation\nimpossible" = "grey50",
