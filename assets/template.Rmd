@@ -63,7 +63,7 @@ Deux onglets pour les deux typologies d'observations sont distingués:
 
 -   **Typologie nationale** : [**écoulement visible**]{style="color: #0570b0;"} ; [**écoulement non visible**]{style="color: #feb24c;"} et [**assec**]{style="color: #e31a1c;"} ;
 
--   **Typologie départementale** : [**écoulement visible acceptable**]{style="color: #0570b0;"} ; [**écoulement visible faible**]{style="color: #FFFF80;"} ; [**écoulement non visible**]{style="color: #feb24c;"} et [**assec**]{style="color: #e31a1c;"}.
+-   **Typologie départementale** : [**écoulement visible acceptable**]{style="color: #0570b0;"} ; [**écoulement visible faible**]{style="color: #bdd7e7;"} ; [**écoulement non visible**]{style="color: #feb24c;"} et [**assec**]{style="color: #e31a1c;"}.
 
 Les **observations impossibles** et **données manquantes** sont également représentées.
 
