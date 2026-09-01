@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron:  "17 7 * * *"
+    - cron:  "12 6 * * *"
   workflow_dispatch:
 
 name: Daily update
