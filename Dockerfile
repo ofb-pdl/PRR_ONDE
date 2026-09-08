@@ -21,6 +21,7 @@ RUN install2.r --error \
   data.table \
   forcats \
   glue \
+  plotly \
   leaflet \
   sf \
   tidyr \
