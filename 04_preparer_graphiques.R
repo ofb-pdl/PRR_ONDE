@@ -885,12 +885,288 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
     ) %>% 
     purrr::set_names(conf_dep)
 
+      ## Indice ONDE par département
+  
+  library(plotly)
+  
+  plot_indice_onde_superpose_interactif <- function(data_indice, departement) {
+    
+    # --- Préparation des données ---
+    df <- data_indice %>%
+      dplyr::filter(
+        code_departement == departement,
+        campagne_complete == TRUE,
+        !is.na(indice_onde)
+      ) %>%
+      dplyr::mutate(
+        annee = lubridate::year(date_campagne),
+        date_superposee = as.Date(
+          paste0("2000-", format(date_campagne, "%m-%d"))
+        )
+      ) %>%
+      dplyr::arrange(annee, date_superposee)
+    
+    annees    <- sort(unique(df$annee))
+    nb_annees <- length(annees)
+    
+    # Palette dégradée bleu foncé -> rouge foncé
+    couleurs <- setNames(
+      colorRampPalette(
+        c(
+          "#2C7BB6", # bleu
+          "#00A6CA", # cyan
+          "#00CCBC", # turquoise
+          "#90EB9D", # vert clair
+          "#FFFF8C", # jaune
+          "#F9D057", # orange clair
+          "#F29E2E", # orange
+          "#E76818", # orange foncé
+          "#D7191C"  # rouge
+        )
+      )(nb_annees),
+      as.character(annees)
+    )
+    
+    # --- Formes des points ---
+    shapes <- c("usuelle" = "square", "complémentaire" = "circle")
+    
+    # Labels des mois en français ---
+    mois_fr <- c(
+      "Janv", "Fév", "Mars", "Avril", "Mai", "Juin",
+      "Juil", "Août", "Sept", "Oct", "Nov", "Déc"
+    )
+    
+    # Valeurs en millisecondes (milieu de chaque mois pour centrer le label)
+    tickvals_mois <- as.numeric(
+      as.POSIXct(
+        paste0("2000-", sprintf("%02d", 1:12), "-15"),
+        tz = "UTC"
+      )
+    ) * 1000
+    
+    # -------------------------------------------------------
+    # --- Construction des traces dans une liste d'abord  ---
+    # -------------------------------------------------------
+    
+    traces            <- list()
+    idx               <- 1
+    indices_par_annee <- list()
+    
+    for (a in annees) {
+      
+      df_annee      <- df %>% dplyr::filter(annee == a)
+      couleur       <- couleurs[as.character(a)]
+      indices_annee <- c()
+      
+      # -- Ligne continue --
+      traces[[idx]] <- list(
+        x           = df_annee$date_superposee,
+        y           = df_annee$indice_onde,
+        type        = "scatter",
+        mode        = "lines",
+        line        = list(color = couleur, width = 2),
+        name        = as.character(a),
+        legendgroup = as.character(a),
+        showlegend  = TRUE,
+        hoverinfo   = "skip"
+      )
+      indices_annee <- c(indices_annee, idx)
+      idx <- idx + 1
+      
+      # -- Points par type de campagne --
+      for (type in c("usuelle", "complémentaire")) {
+        
+        df_type <- df_annee %>%
+          dplyr::filter(libelle_type_campagne == type)
+        
+        if (nrow(df_type) == 0) next
+        
+        traces[[idx]] <- list(
+          x           = df_type$date_superposee,
+          y           = df_type$indice_onde,
+          type        = "scatter",
+          mode        = "markers",
+          marker      = list(
+            color  = couleur,
+            size   = 8,
+            symbol = shapes[type]
+          ),
+          name        = as.character(a),
+          legendgroup = as.character(a),
+          showlegend  = FALSE,
+          text        = paste0(
+            "Année : ",  df_type$annee,   "<br>",
+            "Date  : ",  format(df_type$date_superposee, "%d %b"), "<br>",
+            "Indice : ", sprintf("%.2f", df_type$indice_onde), "<br>",
+            "Type  : ",  df_type$libelle_type_campagne
+          ),
+          hoverinfo   = "text"
+        )
+        indices_annee <- c(indices_annee, idx)
+        idx <- idx + 1
+      }
+      
+      indices_par_annee[[as.character(a)]] <- indices_annee
+    }
+    
+    nb_traces_total <- idx - 1
+    
+    # -------------------------------------------------------
+    # --- Boutons du menu déroulant                       ---
+    # -------------------------------------------------------
+    
+    btn_toutes <- list(
+      method = "restyle",
+      args   = list(list(visible = as.list(rep(TRUE,  nb_traces_total)))),
+      label  = "Toutes"
+    )
+    
+    btns_annees <- purrr::map(annees, function(a) {
+      visible <- rep(FALSE, nb_traces_total)
+      visible[indices_par_annee[[as.character(a)]]] <- TRUE
+      list(
+        method = "restyle",
+        args   = list(list(visible = as.list(visible))),
+        label  = as.character(a)
+      )
+    })
+    
+    tous_boutons <- c(list(btn_toutes), btns_annees)
+    
+    # -------------------------------------------------------
+    # --- Assemblage du graphique plotly                  ---
+    # -------------------------------------------------------
+    
+    p <- plotly::plot_ly()
+    
+    for (tr in traces) {
+      p <- p %>% plotly::add_trace(
+        x           = tr$x,
+        y           = tr$y,
+        type        = tr$type,
+        mode        = tr$mode,
+        line        = tr$line,
+        marker      = tr$marker,
+        name        = tr$name,
+        legendgroup = tr$legendgroup,
+        showlegend  = tr$showlegend,
+        text        = tr$text,
+        hoverinfo   = tr$hoverinfo
+      )
+    }
+    
+    # --- Layout ---
+    p <- p %>%
+      plotly::layout(
+        
+        autosize = FALSE,
+        width = 1000,
+        height = 700,
+        
+        title = list(
+          text = paste0("Indice ONDE départemental - ", departement),
+          font = list(size = 15)
+        ),
+        
+        # Axe X : mois en français, de janvier à décembre
+        xaxis = list(
+          range     = c(
+            as.numeric(as.POSIXct("2000-01-01", tz = "UTC")) * 1000,
+            as.numeric(as.POSIXct("2000-12-31", tz = "UTC")) * 1000
+          ),
+          tickmode  = "array",
+          tickvals  = tickvals_mois,
+          ticktext  = mois_fr,
+          tickangle = 0
+        ),
+        
+        yaxis = list(
+          title = "Indice ONDE",
+          range = c(0, 10.5),
+          dtick = 1
+        ),
+        
+        legend = list(
+          orientation = "h",
+          x           = 0,
+          y           = -0.08,
+          title       = list(text = "<b>Année</b>")
+        ),
+        
+        hovermode = "closest",
+        margin    = list(b = 190, t = 70, l = 60, r = 30),
+        
+        # -- Menu déroulant --
+        updatemenus = list(
+          list(
+            type        = "dropdown",
+            direction   = "down",
+            x           = 0.12,
+            xanchor     = "left",
+            y           = 1.15,
+            yanchor     = "top",
+            showactive  = TRUE,
+            active      = 0,
+            buttons     = tous_boutons,
+            bgcolor     = "#f0f0f0",
+            bordercolor = "#cccccc",
+            font        = list(size = 13)
+          )
+        ),
+        
+        # -- Annotations --
+        annotations = list(
+          
+          list(
+            text      = "<b>Sélectionner : </b>",
+            x = 0, xref = "paper", xanchor = "left",
+            y = 1.13, yref = "paper", yanchor = "top",
+            showarrow = FALSE,
+            font      = list(size = 13)
+          ),
+          
+          list(
+            text      = "<b>Type de campagne :</b>",
+            x = 0, xref = "paper", xanchor = "left",
+            y = -0.26, yref = "paper", yanchor = "top",
+            showarrow = FALSE,
+            font      = list(size = 13)
+          ),
+          
+          list(
+            text      = "<span style='font-size:20px'>■</span>  usuelle",
+            x = 0, xref = "paper", xanchor = "left",
+            y = -0.34, yref = "paper", yanchor = "top",
+            showarrow = FALSE,
+            font      = list(size = 12, color = "grey40")
+          ),
+          
+          list(
+            text      = "<span style='font-size:20px'>●</span>  complémentaire",
+            x = 0.18, xref = "paper", xanchor = "left",
+            y = -0.34, yref = "paper", yanchor = "top",
+            showarrow = FALSE,
+            font      = list(size = 12, color = "grey40")
+          )
+        )
+      )
+    
+    p <- p %>%
+      plotly::config(
+        responsive = TRUE
+      )
+    
+    return(p)
+  }
+
   ## Sauvegarde
   save(
     bilan_cond_reg_typo_nat,
     bilan_cond_reg_typo_dep,
     bilan_cond_dep,
     graphs_mois,
+    plot_indice_onde_superpose_interactif,
+    indice_onde,
     severite_assecs_reg,
     severite_assecs_dep,
     assecs_consecutifs_reg,
