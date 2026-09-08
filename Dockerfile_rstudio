@@ -16,7 +16,7 @@ RUN apt-get update -qq && apt-get -y --no-install-recommends install \
   libfribidi-dev
 
 # Installer les packages R
-RUN R -e "install.packages(c('dplyr', 'lubridate', 'purrr', 'stringr', 'hubeau', 'data.table', 'forcats', 'glue', 'leaflet', 'sf', 'tidyr', 'ggplot2', 'ggrepel', 'png', 'scales', 'webp', 'rmarkdown', 'shiny', 'knitr', 'leafem', 'mapview', 'htmltools', 'leafpop', 'tidyverse', 'leaflet.extras', 'remotes', 'ragg'), repos='https://cloud.r-project.org/')"
+RUN R -e "install.packages(c('dplyr', 'lubridate', 'purrr', 'plotly', 'stringr', 'hubeau', 'data.table', 'forcats', 'glue', 'leaflet', 'sf', 'tidyr', 'ggplot2', 'ggrepel', 'png', 'scales', 'webp', 'rmarkdown', 'shiny', 'knitr', 'leafem', 'mapview', 'htmltools', 'leafpop', 'tidyverse', 'leaflet.extras', 'remotes', 'ragg'), repos='https://cloud.r-project.org/')"
 
 # Installer ondetools depuis Github
 RUN R -e "remotes::install_github('richaben/ondetools')"
