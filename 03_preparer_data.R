@@ -67,6 +67,7 @@ if (to_update) {
     ) %>% 
     dplyr::select(
       code_station, libelle_station,
+      code_campagne, code_ecoulement,
       date_campagne, Annee, Mois, 
       lib_ecoul3mod, lib_ecoul4mod,
       libelle_type_campagne,
@@ -674,6 +675,116 @@ if (to_update) {
   } else {
     icones_3mod_plus <- icones_4mod_plus <- c()
   }
+
+    ## Indice ONDE par département et par campagne
+  ##
+  ## L'indice est calculé uniquement pour les campagnes
+  ## ayant prospecté l'ensemble des stations du département.
+  ## en retirant également les "observations impossibles"
+  ##
+  ## N2 = stations avec code_ecoulement 1a ou 1f ou 1
+  ## N1 = stations avec code_ecoulement 2
+  ## 
+  ## Indice = (N2 * 5 + N1 * 10) / nombre total de stations
+  
+  donnees_indice_onde <- onde_periode %>%
+    dplyr::filter(
+      !is.na(code_campagne),
+      !is.na(code_ecoulement)
+    ) %>%
+    dplyr::distinct(
+      code_departement,
+      code_campagne,
+      code_station,
+      date_campagne,
+      libelle_type_campagne,
+      code_ecoulement
+    )
+  
+  
+  # Nombre de stations prospectées par campagne
+  stations_par_campagne <- donnees_indice_onde %>%
+    dplyr::group_by(
+      code_departement,
+      code_campagne,
+      date_campagne,
+      libelle_type_campagne
+    ) %>%
+    dplyr::summarise(
+      n_stations = dplyr::n_distinct(code_station),
+      .groups = "drop"
+    )
+  
+  
+  # Nombre de stations de référence par département
+  #
+  # Les campagnes usuelles servent de référence.
+  # On prend le nombre maximal de stations observées lors
+  # d'une campagne usuelle du département.
+  reference_stations <- stations_par_campagne %>%
+    dplyr::filter(
+      libelle_type_campagne == "usuelle"
+    ) %>%
+    dplyr::group_by(
+      code_departement
+    ) %>%
+    dplyr::summarise(
+      n_stations_reference = max(n_stations),
+      .groups = "drop"
+    )
+  
+  
+  # Calcul de N1, N2 et de l'indice
+  indice_onde <- donnees_indice_onde %>%
+    dplyr::group_by(
+      code_departement,
+      code_campagne,
+      date_campagne,
+      libelle_type_campagne
+    ) %>%
+    dplyr::summarise(
+      
+      # Nombre total de stations prospectées
+      n_stations = dplyr::n_distinct(code_station),
+      
+      # Nombre de stations valides (hors observations impossibles)
+      n_stations_valides = dplyr::n_distinct(
+        code_station[code_ecoulement != "4"]
+      ),
+      
+      N2 = dplyr::n_distinct(
+        code_station[
+          code_ecoulement == "2"
+        ]
+      ),
+      
+      N1 = dplyr::n_distinct(
+        code_station[
+          code_ecoulement %in% c("1a", "1f", "1")
+        ]
+      ),
+      
+      .groups = "drop"
+    ) %>%
+    
+    dplyr::left_join(
+      reference_stations,
+      by = "code_departement"
+    ) %>%
+    
+    dplyr::mutate(
+      campagne_complete =
+        n_stations_valides == n_stations_reference
+    ) %>%
+    
+    # Calcul de l'indice uniquement pour les campagnes complètes
+    dplyr::mutate(
+      indice_onde = dplyr::if_else(
+        campagne_complete,
+        (N2 * 5 + N1 * 10) / n_stations_valides,
+        NA_real_
+      )
+    )
   
   
   ########################
@@ -709,6 +820,7 @@ if (to_update) {
        onde_anciennes_stations,
        onde_plus,
        onde_usuel,
+       indice_onde,
        df_categ_obs_3mod,
        df_categ_obs_3mod_reg,
        mes_couleurs_3mod,
