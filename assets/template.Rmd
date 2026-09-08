@@ -390,6 +390,99 @@ for (m in names(graphs_mois)) {
 }
 
 ```
+## Indice ONDE
+
+<br>
+
+L'indice ONDE est calculé pour les campagnes (usuelles et complémentaires) où toutes les stations du département ont été prospectées.
+
+<br>
+
+<div style="margin-bottom:20px;">
+
+<button onclick="showPlot('44')" class="dep-btn">
+  Loire-Atlantique
+</button>
+
+<button onclick="showPlot('49')" class="dep-btn">
+  Maine-et-Loire
+</button>
+
+<button onclick="showPlot('53')" class="dep-btn">
+  Mayenne
+</button>
+
+<button onclick="showPlot('72')" class="dep-btn">
+  Sarthe
+</button>
+
+<button onclick="showPlot('85')" class="dep-btn">
+  Vendée
+</button>
+
+</div>
+
+<style>
+
+.dep-btn {
+  background-color:#f7fbff;
+  color:#4575b4;
+  font-weight:bold;
+  font-size:15px;
+  border:2px solid #4575b4;
+  border-radius:8px;
+  padding:8px 14px;
+  margin-right:8px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.dep-btn:hover {
+  background-color:#4575b4;
+  color:white;
+}
+
+</style>
+```{r}
+library(htmltools)
+library(plotly)
+
+deps <- c(44, 49, 53, 72, 85)
+
+plots <- lapply(deps, function(d){
+
+  htmltools::div(
+    id = paste0("plot_", d),
+
+    style = if(d != 44)
+      "display:none; width:90%;"
+    else
+      "width:90%;",
+
+    plot_indice_onde_superpose_interactif(
+      data_indice = indice_onde,
+      departement = d
+    )
+  )
+})
+
+htmltools::tagList(plots)
+```
+
+<script>
+
+function showPlot(dep) {
+
+  var deps = ["44","49","53","72","85"];
+
+  deps.forEach(function(d) {
+    document.getElementById("plot_" + d).style.display = "none";
+  });
+
+  document.getElementById("plot_" + dep).style.display = "block";
+}
+
+</script>
 
 
 ## Méthodologie
@@ -412,8 +505,19 @@ Deux types de campagnes d'observations sont distinguées :
 
 -   Les campagnes d'observations *complémentaires*, qui sont réalisées lorsque les conditions hydrologiques locales sont jugées sensibles (i.e, sécheresse). Ces observations *complémentaires* peuvent être réalisées sur un sous-ensemble (ou la totalité) des stations présentes en départements.
 
+**L'indice ONDE**
+
+L'indice ONDE est calculé à l'échelle départementale. Il est comparable sur un même référentiel de station, c'est pourquoi il ne peut être calculé que pour les campagnes où toutes les stations ont été prospectées. 
+Sa formule de calcul est la suivante : 
+
+**Indice ONDE = (5 x N2 + 10 x N1)/N**
+
+N : nombre total de stations, N1 : nombre de stations en écoulement continu, N2 : nombre de stations en écoulement interrompu (écoulement non visible)
+
+Les assecs ne rapportent pas de point.
+
 **La valorisation présentée ici**
 
-La lecture des données, leur mise en forme et la production des graphiques sont effectués au moyen du logiciel *R* et de plusieurs *packages* (dont `ondetools`, `hubeau`, `tidyverse`, `ggplot2`, `rmarkdown`, `leaflet` et `mapview`).
+La lecture des données, leur mise en forme et la production des graphiques sont effectués au moyen du logiciel *R* et de plusieurs *packages* (dont `ondetools`, `hubeau`, `tidyverse`, `ggplot2`, `rmarkdown`, `leaflet`, `plotly`, `htmltools` et `mapview`).
 
 Les fonds et couches pour les cartes proviennent de *leaflet*, *IGN*, *Propluvia*.
