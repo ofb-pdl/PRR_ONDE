@@ -390,6 +390,7 @@ for (m in names(graphs_mois)) {
 }
 
 ```
+
 ## Indice ONDE
 
 <br>
@@ -443,6 +444,7 @@ L'indice ONDE est calculé pour les campagnes (usuelles et complémentaires) où
 }
 
 </style>
+
 ```{r}
 library(htmltools)
 library(plotly)
