@@ -36,6 +36,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: deploy
+
+      - name: Build Docker image locally
+        run: docker build -f Dockerfile -t ofbidf/r_prr_onde:latest .
           
       - name: Run R scripts in Docker
         run: |
