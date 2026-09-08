@@ -12,6 +12,7 @@ RUN apt-get update -qq && apt-get -y --no-install-recommends install \
 
 # Installer les packages R
 RUN install2.r --error \
+  remotes \
   renv \
   dplyr \
   lubridate \
