@@ -891,7 +891,6 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
   
   plot_indice_onde_superpose_interactif <- function(data_indice, departement) {
     
-    # --- Préparation des données ---
     df <- data_indice %>%
       dplyr::filter(
         code_departement == departement,
@@ -909,44 +908,42 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
     annees    <- sort(unique(df$annee))
     nb_annees <- length(annees)
     
-    # Palette dégradée bleu foncé -> rouge foncé
+    # Palette bleu foncé -> rouge foncé
     couleurs <- setNames(
       colorRampPalette(
         c(
-          "#2C7BB6", # bleu
-          "#00A6CA", # cyan
-          "#00CCBC", # turquoise
-          "#90EB9D", # vert clair
-          "#FFFF8C", # jaune
-          "#F9D057", # orange clair
-          "#F29E2E", # orange
-          "#E76818", # orange foncé
-          "#D7191C"  # rouge
+          "#2C7BB6", 
+          "#00A6CA", 
+          "#00CCBC", 
+          "#90EB9D", 
+          "#FFFF8C", 
+          "#F9D057", 
+          "#F29E2E", 
+          "#E76818", 
+          "#D7191C"  
         )
       )(nb_annees),
       as.character(annees)
     )
     
-    # --- Formes des points ---
+    # Formes des points
     shapes <- c("usuelle" = "square", "complémentaire" = "circle")
     
-    # Labels des mois en français ---
+    # Mois
     mois_fr <- c(
       "Janv", "Fév", "Mars", "Avril", "Mai", "Juin",
       "Juil", "Août", "Sept", "Oct", "Nov", "Déc"
     )
     
-    # Valeurs en millisecondes (milieu de chaque mois pour centrer le label)
+    # Valeurs 
     tickvals_mois <- as.numeric(
       as.POSIXct(
-        paste0("2000-", sprintf("%02d", 1:12), "-15"),
+        paste0("2000-", sprintf("%02d", 1:12), "-01"),
         tz = "UTC"
       )
     ) * 1000
     
-    # -------------------------------------------------------
-    # --- Construction des traces dans une liste d'abord  ---
-    # -------------------------------------------------------
+    # Construction des traces
     
     traces            <- list()
     idx               <- 1
@@ -958,7 +955,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
       couleur       <- couleurs[as.character(a)]
       indices_annee <- c()
       
-      # -- Ligne continue --
+      # Ligne continue
       traces[[idx]] <- list(
         x           = df_annee$date_superposee,
         y           = df_annee$indice_onde,
@@ -973,7 +970,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
       indices_annee <- c(indices_annee, idx)
       idx <- idx + 1
       
-      # -- Points par type de campagne --
+      # Points par type de campagne
       for (type in c("usuelle", "complémentaire")) {
         
         df_type <- df_annee %>%
@@ -1011,9 +1008,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
     
     nb_traces_total <- idx - 1
     
-    # -------------------------------------------------------
-    # --- Boutons du menu déroulant                       ---
-    # -------------------------------------------------------
+    # Menu déroulant                       
     
     btn_toutes <- list(
       method = "restyle",
@@ -1033,9 +1028,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
     
     tous_boutons <- c(list(btn_toutes), btns_annees)
     
-    # -------------------------------------------------------
-    # --- Assemblage du graphique plotly                  ---
-    # -------------------------------------------------------
+    # Graphique plotly
     
     p <- plotly::plot_ly()
     
@@ -1055,7 +1048,6 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
       )
     }
     
-    # --- Layout ---
     p <- p %>%
       plotly::layout(
         
@@ -1068,7 +1060,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
           font = list(size = 15)
         ),
         
-        # Axe X : mois en français, de janvier à décembre
+        # Axe X : mois
         xaxis = list(
           range     = c(
             as.numeric(as.POSIXct("2000-01-01", tz = "UTC")) * 1000,
@@ -1096,7 +1088,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
         hovermode = "closest",
         margin    = list(b = 190, t = 70, l = 60, r = 30),
         
-        # -- Menu déroulant --
+        # Menu déroulant
         updatemenus = list(
           list(
             type        = "dropdown",
@@ -1114,7 +1106,7 @@ plot_bilan_prop <- function(data_bilan, lib_ecoulement, regional = FALSE, modali
           )
         ),
         
-        # -- Annotations --
+        # Légende
         annotations = list(
           
           list(
