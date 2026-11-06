@@ -314,7 +314,7 @@ bilan_cond_reg_typo_nat
 bilan_cond_reg_typo_dep
 ```
 
-### **Évolution des conditions d'écoulements lors des campagnes usuelles par mois (stations encore actives)** {.tabset}
+### **Évolution des conditions d'écoulements par mois (stations encore actives)** {.tabset}
 
 <br>
 
@@ -358,9 +358,7 @@ for (d in conf_dep) {
   if (d %in% df_categ_obs_mensuelle_4mod$code_departement) {
     cat(paste0("\n### ", d, "\n"))
     
-    cat(paste0("### **Conditions d'écoulement lors des campagnes de ", unique(df_categ_obs_mensuelle_4mod$Annee)," (usuelles et complémentaires de fin de mois)**\n"
-  )
-)
+    cat(paste0("#### **Conditions d'écoulement lors des campagnes (usuelles et complémentaires de fin de mois - ", unique(df_categ_obs_mensuelle_4mod$Annee)), ")**\n")
     
     print(bilan_cond_dep[[d]])
     
