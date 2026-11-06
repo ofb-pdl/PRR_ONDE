@@ -391,11 +391,20 @@ plot_bilan_prop <- function(data_bilan,
   )
   
   ## Mois à afficher : mai-septembre + mois de campagnes complémentaires retenues (avril, octobre, novembre pour l'instant)
-  mois_affiches <- sprintf("%02d", 4:11)
-  
-  mois_a_grapher <- mois_a_grapher[
-    as.character(mois_a_grapher) %in% mois_affiches
-  ]
+ ## Mois réellement disponibles dans les données mensuelles
+mois_a_grapher <- onde_mensuel %>%
+  dplyr::distinct(Mois) %>%
+  dplyr::pull(Mois) %>%
+  as.character() %>%
+  sort()
+
+## Mois affichés dans le rapport : avril à novembre.
+## Les autres mois restent dans onde_mensuel.
+mois_affiches <- sprintf("%02d", 4:11)
+
+mois_a_grapher <- mois_a_grapher[
+  mois_a_grapher %in% mois_affiches
+]
   
   annees_a_grapher <- onde_mensuel %>%
     dplyr::distinct(Annee) %>%
