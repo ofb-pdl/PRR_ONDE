@@ -115,6 +115,87 @@ if (to_update) {
       libelle_type_campagne == "usuelle",
       Mois %in% c("05", "06", "07", "08", "09")
     )
+
+  # données pour les campagnes de fin de mois (usuelles et complémentaires)
+  mois_usuels <- sprintf("%02d", 5:9)
+  
+  ## Identification des campagnes complémentaires réalisées entre le 20 et le dernier jour du mois
+  campagnes_comp_fin_mois <- onde_periode %>%
+    dplyr::filter(
+      libelle_type_campagne == "complémentaire",
+      !is.na(code_campagne),
+      !is.na(date_campagne)
+    ) %>%
+    dplyr::group_by(code_campagne) %>%
+    dplyr::summarise(
+      debut_campagne = min(date_campagne),
+      fin_campagne = max(date_campagne),
+      campagne_fin_mois = all(lubridate::day(date_campagne) >= 20),
+      .groups = "drop"
+    ) %>%
+    dplyr::filter(campagne_fin_mois)
+  
+  ## Campagnes complémentaires retenues (fin du mois)
+  onde_comp_fin_mois <- onde_periode %>%
+    dplyr::filter(libelle_type_campagne == "complémentaire") %>%
+    dplyr::semi_join(
+      campagnes_comp_fin_mois,
+      by = "code_campagne")
+
+  mois_campagnes_mensuelles <- c(
+    mois_usuels,
+    sort(unique(onde_comp_fin_mois$Mois))
+  ) %>%
+    unique() %>%
+    sort()
+
+  ## Années présentes dans les données
+  annees_campagnes_mensuelles <- sort(unique(onde_periode$Annee))
+  
+  ## Données pour les graphiques mensuels + création de toutes les combinaisons pour avoir "donnée manquante"
+  onde_mensuel <- dplyr::bind_rows(
+    onde_usuel,
+    onde_comp_fin_mois
+  ) %>%
+    dplyr::distinct(
+      code_station,
+      libelle_station,
+      longitude,
+      latitude,
+      code_departement,
+      etat_station,
+      Annee,
+      Mois,
+      .keep_all = TRUE
+    ) %>%
+    tidyr::complete(
+      tidyr::nesting(
+        code_station,
+        libelle_station,
+        longitude,
+        latitude,
+        code_departement,
+        etat_station  ),
+      Annee = annees_campagnes_mensuelles,
+      Mois = mois_campagnes_mensuelles,
+      fill = list(
+        libelle_type_campagne = "Donnée manquante",
+        lib_ecoul3mod = "Donnée manquante",
+        lib_ecoul4mod = "Donnée manquante" )
+    ) %>%
+    dplyr::mutate(
+      date_campagne = dplyr::if_else(
+        is.na(date_campagne),
+        lubridate::as_date(
+          paste(Annee, Mois, "25", sep = "-") ),
+        date_campagne ),
+      Mois_campagne = lubridate::ym(
+        paste(Annee, Mois, sep = "-") )
+    ) %>%
+    dplyr::arrange(
+      Annee,
+      Mois,
+      code_station )
   
   # toutes stations abandonnees
   onde_anciennes_stations <- onde_df %>% 
@@ -317,48 +398,34 @@ if (to_update) {
     dplyr::mutate(Label_p = ifelse(is.na(frq),"",glue::glue("{round(frq,0)}%"))) 
   }
   
-  df_categ_obs_3mod <- onde_usuel %>% 
+  df_categ_obs_mensuelle_3mod <- onde_mensuel %>% 
     prep_data_bilan(
       mod = lib_ecoul3mod,
-      mod_levels = c("Ecoulement visible",
-                     "Ecoulement non visible",
-                     "Assec",
-                     "Observation impossible",
-                     "Donnée manquante"),
+      mod_levels = c("Ecoulement visible","Ecoulement non visible","Assec","Observation impossible","Donnée manquante"
+      ),
       code_departement
-    )
-
-  df_categ_obs_3mod_reg <- onde_usuel %>% 
-    prep_data_bilan(
-      mod = lib_ecoul3mod,
-      mod_levels = c("Ecoulement visible",
-                     "Ecoulement non visible",
-                     "Assec",
-                     "Observation impossible",
-                     "Donnée manquante")
     )
   
-  df_categ_obs_4mod <- onde_usuel %>% 
+  df_categ_obs_mensuelle_3mod_reg <- onde_mensuel %>% 
+    prep_data_bilan(
+      mod = lib_ecoul3mod,
+      mod_levels = c( "Ecoulement visible","Ecoulement non visible","Assec","Observation impossible","Donnée manquante"
+      )
+    )
+  
+  df_categ_obs_mensuelle_4mod <- onde_mensuel %>% 
     prep_data_bilan(
       mod = lib_ecoul4mod,
-      mod_levels = c("Ecoulement visible acceptable",
-                     "Ecoulement visible faible",
-                     "Ecoulement non visible",
-                     "Assec",
-                     "Observation impossible",
-                     "Donnée manquante"),
+      mod_levels = c("Ecoulement visible acceptable","Ecoulement visible faible", "Ecoulement non visible","Assec","Observation impossible","Donnée manquante"
+      ),
       code_departement
     )
-
-  df_categ_obs_4mod_reg <- onde_usuel %>% 
+  
+  df_categ_obs_mensuelle_4mod_reg <- onde_mensuel %>% 
     prep_data_bilan(
       mod = lib_ecoul4mod,
-      mod_levels = c("Ecoulement visible acceptable",
-                     "Ecoulement visible faible",
-                     "Ecoulement non visible",
-                     "Assec",
-                     "Observation impossible",
-                     "Donnée manquante")
+      mod_levels = c("Ecoulement visible acceptable","Ecoulement visible faible","Ecoulement non visible","Assec","Observation impossible","Donnée manquante"
+      )
     )
   
   ## Heatmap
@@ -793,7 +860,7 @@ if (to_update) {
     date_derniere_campagne_usuelle,
     date_derniere_campagne_comp,
     date_derniere_campagne_onde_plus,
-    df_categ_obs_4mod,
+    df_categ_obs_mensuelle_4mod,
     stations_onde_geo_map1,
     icones_3mod, icones_4mod,
     icones_3mod_plus, icones_4mod_plus,
@@ -820,12 +887,13 @@ if (to_update) {
        onde_anciennes_stations,
        onde_plus,
        onde_usuel,
+       onde_mensuel,
        indice_onde,
-       df_categ_obs_3mod,
-       df_categ_obs_3mod_reg,
+       df_categ_obs_mensuelle_3mod, 
+       df_categ_obs_mensuelle_3mod_reg,
+       df_categ_obs_mensuelle_4mod,
+       df_categ_obs_mensuelle_4mod_reg,
        mes_couleurs_3mod,
-       df_categ_obs_4mod,
-       df_categ_obs_4mod_reg,
        mes_couleurs_4mod,
        heatmap_df,
        heatmap_df_dep,
