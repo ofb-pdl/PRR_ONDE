@@ -298,7 +298,7 @@ map_4mod %>%
 
 ## Bilan régional
 
-### **Conditions d'écoulement lors des campagnes (usuelles et complémentaires de fin de mois `r unique(df_categ_obs_mensuelle_4mod$Annee)`)** {.tabset}
+### **Conditions d'écoulement lors des campagnes de `r unique(df_categ_obs_mensuelle_4mod$Annee)` (usuelles et complémentaires de fin de mois )** {.tabset}
 
 <br>
 
@@ -358,7 +358,9 @@ for (d in conf_dep) {
   if (d %in% df_categ_obs_mensuelle_4mod$code_departement) {
     cat(paste0("\n### ", d, "\n"))
     
-    cat(paste0("#### **Conditions d'écoulement lors des campagnes (usuelles et complémentaires de fin de mois ", unique(df_categ_obs_mensuelle_4mod$Annee)), ")**\n")
+    cat(paste0("### **Conditions d'écoulement lors des campagnes de ", unique(df_categ_obs_mensuelle_4mod$Annee)," (usuelles et complémentaires de fin de mois)**\n"
+  )
+)
     
     print(bilan_cond_dep[[d]])
     
