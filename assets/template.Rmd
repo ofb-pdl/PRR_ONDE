@@ -298,7 +298,7 @@ map_4mod %>%
 
 ## Bilan régional
 
-### **Conditions d'écoulement lors des campagnes usuelles (mai à septembre `r unique(df_categ_obs_4mod$Annee)`)** {.tabset}
+### **Conditions d'écoulement lors des campagnes (usuelles et complémentaires de fin de mois `r unique(df_categ_obs_mensuelle_4mod$Annee)`)** {.tabset}
 
 <br>
 
@@ -355,10 +355,10 @@ assecs_consecutifs_reg
 
 ```{r, results='asis', fig.height=5.5, fig.width=9, align='center'}
 for (d in conf_dep) {
-  if (d %in% df_categ_obs_4mod$code_departement) {
+  if (d %in% df_categ_obs_mensuelle_4mod$code_departement) {
     cat(paste0("\n### ", d, "\n"))
     
-    cat(paste0("#### **Conditions d'écoulement lors des campagnes usuelles (mai à septembre ", unique(df_categ_obs_4mod$Annee)), ")**\n")
+    cat(paste0("#### **Conditions d'écoulement lors des campagnes (usuelles et complémentaires de fin de mois ", unique(df_categ_obs_mensuelle_4mod$Annee)), ")**\n")
     
     print(bilan_cond_dep[[d]])
     
