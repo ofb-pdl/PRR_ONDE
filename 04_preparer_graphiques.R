@@ -370,7 +370,7 @@ plot_bilan_prop <- function(data_bilan,
   
   ## Relevés pour le mois en cours les années précédentes
   
-    modalites_nat <- c("Donnée manquante","Observation impossible","Assec","Ecoulement non visible","Ecoulement visible"
+  modalites_nat <- c("Donnée manquante","Observation impossible","Assec","Ecoulement non visible","Ecoulement visible"
   )
   
   modalites_dep <- c("Donnée manquante","Observation impossible","Assec","Ecoulement non visible","Ecoulement visible faible","Ecoulement visible acceptable"
@@ -528,7 +528,7 @@ plot_bilan_prop <- function(data_bilan,
       dplyr::mutate(
         ecoulement = factor(
           .data[[colonne_ecoulement]],
-          levels = rev(modalites)
+          levels = modalites
         )
       ) %>%
       ggplot2::ggplot(
