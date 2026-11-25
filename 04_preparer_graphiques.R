@@ -245,30 +245,42 @@ plot_bilan_prop <- function(data_bilan,
     
     data_bilan %>%
       
-      dplyr::mutate(
-        groupe_affichage = if ("code_departement" %in% names(.)) {
-          paste(Mois, code_departement, sep = "_")
-        } else {
-          as.character(Mois)
-        }
-      ) %>%
+    dplyr::mutate(
+      groupe_affichage = if ("code_departement" %in% names(.)) {
+        paste(Mois, code_departement, sep = "_")
+      } else {
+        as.character(Mois)
+      },
       
-      # Ne garder les mois avec au moins une observation
-      dplyr::group_by(groupe_affichage) %>%
-      dplyr::filter(
-        any(
-          !is.na({{ lib_ecoulement }}) &
-            as.character({{ lib_ecoulement }}) != "Donnée manquante"
-        )
-      ) %>%
-      dplyr::ungroup() %>%
+      ecoulement = factor(
+        as.character({{ lib_ecoulement }}),
+        levels = modalites
+      ),
       
+      # Afficher les données manquantes, sauf quand elles représentent 100 %
+      label_affichage = dplyr::case_when(
+        as.character({{ lib_ecoulement }}) == "Donnée manquante" &
+          round(frq) == 100 ~ "",
+        frq <= 0 ~ "",
+        TRUE ~ Label_p
+      )
+    ) %>%
+    
+    dplyr::group_by(groupe_affichage) %>%
+    dplyr::filter(
+      any(
+        !is.na(ecoulement) &
+          as.character(ecoulement) != "Donnée manquante"
+      )
+    ) %>%
+    dplyr::ungroup() %>%
+    
       ggplot2::ggplot(
         mapping = ggplot2::aes(
           y = frq, 
-          x = forcats::fct_rev(factor(Mois)),
-          fill = forcats::fct_rev({{ lib_ecoulement }}), 
-          label = Label_p
+          x = Mois,
+          fill = ecoulement, 
+          label = label_affichage
         )
       ) +
       ggplot2::geom_bar(
@@ -276,7 +288,7 @@ plot_bilan_prop <- function(data_bilan,
         stat = "identity",
         alpha = 0.7, 
         colour = "black", 
-        width = 0.7, 
+        width = 0.6, 
         linewidth = 0.01
       ) +
       {
@@ -285,29 +297,39 @@ plot_bilan_prop <- function(data_bilan,
         }
       } +
       ggplot2::geom_text(
-        mapping = ggplot2::aes(label = Label_p),
+        mapping = ggplot2::aes(label = label_affichage),
         position = ggplot2::position_stack(vjust = 0.5),
         size = 3,
         colour = "black",
         fontface = "bold.italic"
       ) +
-      ggplot2::coord_flip() +
       ggplot2::ylab("Pourcentage (%)") +
       ggplot2::xlab("Mois") +
       ggplot2::scale_fill_manual(
-        name = "Situation stations",
-        values = c(
-          "Donnée manquante" = "grey90",
-          "Observation impossible" = "grey50",
-          "Assec" = "#d73027",
-          "Ecoulement non visible" = "#fe9929",
-          "Ecoulement visible faible" = "#FFFF80",
-          "Ecoulement visible acceptable" = "#4575b4",
-          "Ecoulement visible" = "#4575b4"
-        ),
-        breaks = modalites,
-        drop = TRUE
-      ) +
+      name = "Situation stations",
+      values = c(
+        "Donnée manquante" = "grey90",
+        "Observation impossible" = "grey50",
+        "Assec" = "#d73027",
+        "Ecoulement non visible" = "#fe9929",
+        "Ecoulement visible faible" = "#FFFF80",
+        "Ecoulement visible acceptable" = "#4575b4",
+        "Ecoulement visible" = "#4575b4"
+      ),
+      breaks = modalites,
+      labels = unname(
+        c(
+        "Donnée manquante" = "Absence de données",
+        "Observation impossible" = "Observation impossible",
+        "Assec" = "Assec",
+        "Ecoulement non visible" = "Ecoulement non visible",
+        "Ecoulement visible faible" = "Ecoulement visible faible",
+        "Ecoulement visible acceptable" = "Ecoulement visible acceptable",
+        "Ecoulement visible" = "Ecoulement visible"
+      )[modalites]
+      ),
+      drop = TRUE
+      )+
       ggplot2::theme_bw() +
       ggplot2::theme(
         title = ggplot2::element_text(size = 11, face = "bold"), 
@@ -337,16 +359,14 @@ plot_bilan_prop <- function(data_bilan,
   }
 
   bilan_cond_reg_typo_nat <- plot_bilan_prop(
-    df_categ_obs_mensuelle_3mod_reg %>% 
-      dplyr::mutate(lib_ecoul3mod = forcats::fct_rev(lib_ecoul3mod)),
+    df_categ_obs_mensuelle_3mod_reg,
     lib_ecoulement = lib_ecoul3mod, 
     regional = TRUE,
     modalites = c("Donnée manquante", "Observation impossible", "Assec", "Ecoulement non visible", "Ecoulement visible")
     )
   
   bilan_cond_reg_typo_dep <- plot_bilan_prop(
-    df_categ_obs_mensuelle_4mod_reg %>% 
-      dplyr::mutate(lib_ecoul4mod = forcats::fct_rev(lib_ecoul4mod)), 
+    df_categ_obs_mensuelle_4mod_reg, 
     lib_ecoulement = lib_ecoul4mod, 
     regional = TRUE,
     modalites = c("Donnée manquante", "Observation impossible", "Assec", "Ecoulement non visible", "Ecoulement visible faible", "Ecoulement visible acceptable")
@@ -358,8 +378,7 @@ plot_bilan_prop <- function(data_bilan,
         if (d %in% df_categ_obs_mensuelle_4mod$code_departement) {
           plot_bilan_prop(
             df_categ_obs_mensuelle_4mod %>% 
-              dplyr::filter(code_departement == d) %>% 
-              dplyr::mutate(lib_ecoul4mod = forcats::fct_rev(lib_ecoul4mod)), 
+              dplyr::filter(code_departement == d), 
             lib_ecoulement = lib_ecoul4mod,
             modalites = c("Donnée manquante", "Observation impossible", "Assec", "Ecoulement non visible", "Ecoulement visible faible", "Ecoulement visible acceptable")
           )
@@ -528,46 +547,156 @@ mois_a_grapher <- mois_a_grapher[
     groupes = "code_departement"
   )
   
-  plot_bilan_mois <- function(data_bilan,
+   plot_bilan_mois <- function(data_bilan,
                               colonne_ecoulement,
                               modalites,
                               regional = FALSE) {
     
-    data_bilan %>%
+    annees <- sort(unique(data_bilan$Annee))
+    
+    donnees_plot <- data_bilan %>%
       dplyr::mutate(
+        
         ecoulement = factor(
           .data[[colonne_ecoulement]],
           levels = modalites
+        ),
+        
+        x_annee = as.numeric(
+          factor(Annee, levels = annees)
+        ),
+        
+        label_affichage = dplyr::case_when(
+          # Ne pas afficher les pourcentages lorsque 100% données manquantes
+          .data[[colonne_ecoulement]] == "Donnée manquante" &
+            round(pct_station) == 100 ~ "",
+          pct_station <= 0 ~ "",
+          TRUE ~ paste0(round(pct_station), "%")
+        ),
+        
+        groupe_pile = if ("code_departement" %in% names(.)) {
+          paste(Annee, code_departement, sep = "_")
+        } else {
+          as.character(Annee)
+        }
+      ) %>%
+      
+      dplyr::group_by(groupe_pile) %>%
+      dplyr::arrange(
+        dplyr::desc(ecoulement),
+        .by_group = TRUE
+      ) %>%
+      dplyr::mutate(
+        ymin = dplyr::lag(cumsum(pct_station), default = 0),
+        ymax = cumsum(pct_station),
+        y_centre = (ymin + ymax) / 2,
+        
+        # Décalage pour la lisibilité (inférieur à 3%)
+        petit_segment = pct_station > 0 &
+          pct_station < 2 &
+          as.character(ecoulement) != "Donnée manquante",
+        
+        numero_petit_segment = cumsum(petit_segment),
+        
+        # Alternance gauche / droite
+        decalage_x = dplyr::case_when(
+          !petit_segment ~ 0,
+          numero_petit_segment %% 2 == 1 ~ -0.18,
+          TRUE ~ 0.18
         )
       ) %>%
-      ggplot2::ggplot(
-        ggplot2::aes(
-          x = factor(Annee),
-          y = pct_station,
-          fill = ecoulement
-        )
-      ) +
+      dplyr::ungroup()
+    
+    ## Deux jeux de données pour les libellés
+    etiquettes_normales <- donnees_plot %>%
+      dplyr::filter(
+        !petit_segment,
+        label_affichage != ""
+      )
+    
+    etiquettes_petites <- donnees_plot %>%
+      dplyr::filter(
+        petit_segment,
+        label_affichage != ""
+      )
+    
+    ggplot2::ggplot(
+      donnees_plot,
+      ggplot2::aes(
+        x = x_annee,
+        y = pct_station,
+        fill = ecoulement
+      )
+    ) +
       ggplot2::geom_col(
         position = "stack",
         alpha = 0.7,
         width = 0.7
       ) +
+      
+      # Étiquettes des segments de 3 % ou plus : au centre
+      ggplot2::geom_text(
+        data = etiquettes_normales,
+        mapping = ggplot2::aes(
+          x = x_annee,
+          y = y_centre,
+          label = label_affichage
+        ),
+        inherit.aes = FALSE,
+        size = 3,
+        colour = "black",
+        fontface = "bold.italic"
+      ) +
+      
+      # Étiquettes des segments < 3 % : décalées 
+      ggplot2::geom_text(
+        data = etiquettes_petites,
+        mapping = ggplot2::aes(
+          x = x_annee + decalage_x,
+          y = y_centre,
+          label = label_affichage
+        ),
+        inherit.aes = FALSE,
+        size = 2.7,
+        colour = "black",
+        fontface = "bold.italic"
+      ) +
+      
       {
         if (!regional) {
           ggplot2::facet_grid(~code_departement)
         }
       } +
+      
+      ggplot2::scale_x_continuous(
+        breaks = seq_along(annees),
+        labels = annees
+      ) +
+      
       ggplot2::scale_fill_manual(
         name = "Situation stations",
         values = couleurs_ecoulement,
         breaks = modalites,
+        labels = unname(
+          c(
+            "Donnée manquante" = "Absence de données",
+            "Observation impossible" = "Observation impossible",
+            "Assec" = "Assec",
+            "Ecoulement non visible" = "Ecoulement non visible",
+            "Ecoulement visible faible" = "Ecoulement visible faible",
+            "Ecoulement visible acceptable" = "Ecoulement visible acceptable",
+            "Ecoulement visible" = "Ecoulement visible"
+          )[modalites]
+        ),
         drop = TRUE
       ) +
+      
       ggplot2::labs(
         title = "Évolution des conditions d'écoulement",
         x = "Année",
         y = NULL
       ) +
+      
       ggplot2::scale_y_continuous(
         labels = scales::label_percent(scale = 1),
         breaks = seq(0, 100, 20),
@@ -578,18 +707,17 @@ mois_a_grapher <- mois_a_grapher[
           labels = scales::label_percent(scale = 1)
         )
       ) +
-      ggplot2::coord_cartesian(ylim = c(0, 100)) +
+      
+      ggplot2::coord_cartesian(
+        ylim = c(0, 102),
+        clip = "off"
+      ) +
+      
       ggplot2::theme_bw() +
       ggplot2::theme(
-        title = ggplot2::element_text(
-          size = 11,
-          face = "bold"
-        ),
+        title = ggplot2::element_text(size = 11, face = "bold"),
         legend.text = ggplot2::element_text(size = 11),
-        legend.title = ggplot2::element_text(
-          size = 11,
-          face = "bold"
-        ),
+        legend.title = ggplot2::element_text(size = 11, face = "bold"),
         axis.text.x = ggplot2::element_text(
           size = 11,
           angle = 45,
@@ -603,8 +731,15 @@ mois_a_grapher <- mois_a_grapher[
           colour = "black",
           fill = "grey80"
         ),
-        legend.position = "bottom"
+        legend.position = "bottom", 
+        plot.margin = ggplot2::margin(
+          t = 15,
+          r = 1.5,
+          b = 1.5,
+          l = 5.5
+        )
       ) +
+      
       ggplot2::guides(
         fill = ggplot2::guide_legend(
           nrow = 2,
@@ -669,7 +804,6 @@ mois_a_grapher <- mois_a_grapher[
     purrr::set_names(
       noms_mois[mois_a_grapher]
     )
-  
   ## Sévérité des assecs
   plot_heatmap <- function(df_heatmap) {
     df_heatmap %>% 
